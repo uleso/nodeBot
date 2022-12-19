@@ -19,8 +19,19 @@ currentDaytime = datetime.datetime.today()
 Today = currentDaytime.date()
 xl = loadXl.loadXl(r"Nodes.xlsx")
 Nodes = xl.loadData(1,1,2,30,True)
-
-
+Handlers = []
+#result 0 = running
+#result 1 = No node
+#result 2 = Error Page
+#result 3 = finished
+class Handler:
+    def __init__(self,window,node,result=0):
+        self.window = window
+        self.node = node
+        self.result = result
+    
+# eCon1=EC.visibility_of_element_located((By.XPATH,"//*[@id='outer']//h2"))
+# eCon2=
 if Nodes is not None:
     options = Options()
     options.page_load_strategy ="none"
@@ -30,7 +41,7 @@ if Nodes is not None:
 
 
 adhocUrl = r"http://oss-cluster1.mgmt.net.cable.rogers.com/node_qualification.html"
-dir_path=r"C:\Users\YPN-1135\Desktop\NodeBot\Screenshots"
+dir_path=r"C:\Users\YPN-1135\Desktop\NodeBot\Screenshots" #herkesin desktop yolunu ekle
 
 def screenshotCount():
     fileList=[]    
@@ -51,46 +62,34 @@ def nodeBas(node):
     finally:
         driver.find_element(By.NAME,"NODE_NUMBER").send_keys(str(node) + Keys.ENTER)
 
-def windowHandler(window,node):
-    print(window,node)
-
-def elementCheck(nodesW):
-
-    for window in nodesW:
-        driver.switch_to.window(window[0])
-        driver.set_window_size(868,660)
-
+def wHandler(Handler):
+    driver.switch_to.window(Handler.window)
+    try: 
+        WebDriverWait(driver,1200).until(EC.visibility_of_element_located((By.ID,"data-heading1")))
+           
+    except exceptions.TimeoutException:
         try:
             driver.find_element(By.ID,"L_64_2")
             
-            # WebDriverWait(driver,600).until(EC.text_to_be_present_in_element((By.ID,"data-heading1"),"Node Qualification"))
-        except exceptions.NoSuchElementException:
-                
-                
-                try:
-                    driver.find_element(By.XPATH,"//*[@id='outer']//h2")
-                    
-                    
-                except exceptions.NoSuchElementException:
-                    
-                       
-                    try:
-                        result=WebDriverWait(driver,1200).until(EC.visibility_of_element_located((By.ID,"SNMP")))   
-                    except:
-                        # driver.switch_to.window(window[0])
-                        pass
-                finally:
-                    driver.switch_to.window(window[0])
-                    driver.save_screenshot(f"Screenshots//{window[1]}_{str(Today)}.png")
-
-        finally:
-            driver.switch_to.window(window[0])
-            marker = driver.find_element(By.ID,"data-heading1").location_once_scrolled_into_view
-            if marker == None:
-                driver.save_screenshot(f"Screenshots//{window[1]}_{str(Today)}.png")
-            else:
-                driver.save_screenshot(f"Screenshots//{window[1]}_{str(Today)}.png")
             
+        except exceptions.NoSuchElementException:
+            driver.set_window_size(300,660)
+            driver.find_element(By.ID,"data-heading1").location_once_scrolled_into_view
+            driver.save_screenshot(f"Screenshots//{Handler.node}_{str(Today)}.png")
+        
+    driver.set_window_size(868,660)
+    driver.find_element(By.ID,"data-heading1").location_once_scrolled_into_view
+    driver.save_screenshot(f"Screenshots//{Handler.node}_{str(Today)}.png")
+    # else:
+        
+    #     marker = driver.find_element(By.ID,"data-heading1").location_once_scrolled_into_view
+    #     if marker == None:
+    #         marker = driver.find_element(By.ID,"data-heading1").location_once_scrolled_into_view
+    #     else:
+    #         driver.save_screenshot(f"Screenshots//{Handler.node}_{str(Today)}.png")
+
+
+
             
 Rows=[]
 sNodes = []
@@ -117,6 +116,9 @@ driver.switch_to.window(driver.window_handles[0])
 driver.close()
 ALL_W = driver.window_handles
 nodesW = tuple(zip(ALL_W,sNodes))
-for window in nodesW:
-    windowHandler(window[0],window[1])
 
+for window in nodesW:
+    Handlers.append(Handler(window[0],window[1]))
+
+for Handler in Handlers:
+    wHandler(Handler)   
